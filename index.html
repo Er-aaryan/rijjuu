@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>for Rijjuuuu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,500;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0a0e1a;
+    --night-deep: #05070d;
+    --mist: #7c8aa8;
+    --paper: #f3ecdf;
+    --paper-shadow: #d9cfba;
+    --ink: #2c2620;
+    --ink-soft: #55483d;
+    --rose: #b2495f;
+    --rose-dim: #7a3547;
+    --wilt: #8a6b6b;
+    --star: rgba(232,230,240,0.85);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    padding: 0;
+    background: var(--night);
+    color: var(--star);
+    font-family: 'Literata', Georgia, serif;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  body{
+    min-height: 100vh;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ---------- background scene ---------- */
+  #scene{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(60,75,110,0.35), transparent 60%),
+      linear-gradient(180deg, var(--night) 0%, var(--night-deep) 100%);
+    overflow: hidden;
+  }
+
+  #city{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32vh;
+    opacity: 0.5;
+    filter: blur(1.5px);
+  }
+
+  #rain-canvas{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .petal{
+    position: absolute;
+    top: -5vh;
+    font-size: 1.1rem;
+    opacity: 0;
+    pointer-events: none;
+    animation-name: drift;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+    filter: drop-shadow(0 0 6px rgba(178,73,95,0.25));
+  }
+
+  @keyframes drift{
+    0%   { transform: translate(0, -5vh) rotate(0deg); opacity: 0; }
+    8%   { opacity: 0.85; }
+    92%  { opacity: 0.65; }
+    100% { transform: translate(var(--drift-x, 40px), 105vh) rotate(340deg); opacity: 0; }
+  }
+
+  /* ---------- layout scaffolding ---------- */
+  .stage{
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8vh 6vw;
+  }
+
+  .hidden{ display: none !important; }
+
+  .fade-in{
+    animation: fadeIn 1.4s ease forwards;
+  }
+  @keyframes fadeIn{
+    from{ opacity: 0; transform: translateY(10px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- opening screen ---------- */
+  #opening{
+    text-align: center;
+    max-width: 34rem;
+  }
+
+  .opening-line{
+    font-size: clamp(1.1rem, 2.6vw, 1.5rem);
+    font-weight: 300;
+    color: var(--star);
+    opacity: 0;
+    margin: 0 0 1.1rem 0;
+    line-height: 1.6;
+  }
+
+  .opening-line.show{
+    animation: fadeIn 1.6s ease forwards;
+  }
+
+  .opening-sub{
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+    color: var(--mist);
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .enter-btn{
+    margin-top: 3rem;
+    background: transparent;
+    border: 1px solid rgba(232,230,240,0.35);
+    color: var(--star);
+    font-family: 'Literata', serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    padding: 0.85rem 1.6rem;
+    border-radius: 2px;
+    cursor: pointer;
+    opacity: 0;
+    transition: border-color 0.4s ease, background 0.4s ease, transform 0.2s ease;
+  }
+
+  .enter-btn.show{
+    animation: fadeIn 1.6s ease forwards;
+  }
+
+  .enter-btn:hover{
+    border-color: var(--rose);
+    background: rgba(178,73,95,0.08);
+  }
+
+  .enter-btn:active{ transform: scale(0.98); }
+
+  .enter-btn:focus-visible, button:focus-visible, .choice-btn:focus-visible{
+    outline: 2px solid var(--rose);
+    outline-offset: 3px;
+  }
+
+  .no-pressure-note{
+    display: block;
+    margin-top: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--mist);
+    opacity: 0;
+  }
+  .no-pressure-note.show{ animation: fadeIn 1.8s ease forwards; }
+
+  /* ---------- letter section ---------- */
+  #letter-stage{
+    padding-top: 10vh;
+    padding-bottom: 14vh;
+    align-items: flex-start;
+  }
+
+  .letter-wrap{
+    max-width: 40rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .letter-heading{
+    text-align: center;
+    color: var(--mist);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    margin-bottom: 2.2rem;
+    font-style: italic;
+  }
+
+  .paper{
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 3px;
+    padding: clamp(2rem, 6vw, 4rem) clamp(1.6rem, 6vw, 3.6rem);
+    box-shadow:
+      0 2px 0 var(--paper-shadow),
+      0 25px 60px -20px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(0,0,0,0.04);
+    position: relative;
+    transform: rotate(-0.4deg);
+  }
+
+  .paper::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(rgba(44,38,32,0.05) 0px, rgba(44,38,32,0.05) 1px, transparent 1px, transparent 2px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .letter-font{
+    font-family: 'Caveat', cursive;
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  .letter-font p{
+    margin: 0 0 1.1rem 0;
+  }
+
+  .letter-font .signoff{
+    margin-top: 1.6rem;
+  }
+
+  .caret{
+    display: inline-block;
+    width: 2px;
+    background: var(--ink-soft);
+    margin-left: 1px;
+    animation: blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity: 0; } }
+
+  .skip-row{
+    text-align: center;
+    margin-top: 1.6rem;
+  }
+
+  .skip-btn{
+    background: none;
+    border: none;
+    color: var(--mist);
+    font-family: 'Literata', serif;
+    font-size: 0.82rem;
+    font-style: italic;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    opacity: 0.7;
+  }
+  .skip-btn:hover{ opacity: 1; }
+
+  /* ---------- choices ---------- */
+  #choices-block{
+    margin-top: 3.2rem;
+    text-align: center;
+    opacity: 0;
+  }
+  #choices-block.show{ animation: fadeIn 1.4s ease forwards; }
+
+  .choices-lead{
+    font-size: 0.95rem;
+    color: var(--mist);
+    margin-bottom: 1.4rem;
+    font-style: italic;
+  }
+
+  .choice-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+
+  .choice-btn{
+    background: rgba(243,236,223,0.04);
+    border: 1px solid rgba(232,230,240,0.25);
+    color: var(--star);
+    font-family: 'Literata', serif;
+    font-size: 0.92rem;
+    padding: 0.8rem 1.3rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+
+  .choice-btn:hover{
+    border-color: var(--rose);
+    background: rgba(178,73,95,0.1);
+  }
+
+  .choice-btn.picked{
+    border-color: var(--rose);
+    background: rgba(178,73,95,0.16);
+  }
+
+  .response-note{
+    margin-top: 1.4rem;
+    font-size: 0.9rem;
+    color: var(--star);
+    opacity: 0;
+    min-height: 1.4em;
+  }
+  .response-note.show{ animation: fadeIn 1s ease forwards; }
+
+  /* ---------- final screen ---------- */
+  #final-stage{
+    text-align: center;
+    padding-top: 14vh;
+  }
+
+  .final-line{
+    font-size: clamp(1.1rem, 2.6vw, 1.4rem);
+    line-height: 1.7;
+    color: var(--star);
+    margin: 0 0 0.4rem 0;
+    font-weight: 300;
+  }
+
+  .final-triplet{
+    margin: 2.4rem 0;
+    color: var(--mist);
+    font-size: 0.95rem;
+    line-height: 2;
+    font-style: italic;
+  }
+
+  .final-rose{
+    margin-top: 2.2rem;
+    font-size: 1.15rem;
+  }
+
+  footer.site-footer{
+    margin-top: 5rem;
+    color: var(--wilt);
+    font-size: 0.78rem;
+    font-style: italic;
+    letter-spacing: 0.01em;
+  }
+
+  .rose-mark{ color: var(--rose); }
+  .wilt-mark{ color: var(--wilt); }
+
+  @media (max-width: 480px){
+    .paper{ transform: none; }
+    .stage{ padding: 6vh 5vw; }
+  }
+</style>
+</head>
+<body>
+
+<div id="scene">
+  <svg id="city" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true">
+    <rect x="30" y="140" width="70" height="160" fill="#141c30"/>
+    <rect x="120" y="90" width="55" height="210" fill="#101627"/>
+    <rect x="195" y="160" width="90" height="140" fill="#161f36"/>
+    <rect x="310" y="60" width="60" height="240" fill="#0d1322"/>
+    <rect x="400" y="120" width="80" height="180" fill="#131b2e"/>
+    <rect x="510" y="180" width="60" height="120" fill="#101627"/>
+    <rect x="600" y="70" width="70" height="230" fill="#141c30"/>
+    <rect x="700" y="150" width="90" height="150" fill="#0d1322"/>
+    <rect x="820" y="100" width="55" height="200" fill="#131b2e"/>
+    <rect x="900" y="170" width="80" height="130" fill="#101627"/>
+    <rect x="1010" y="90" width="60" height="210" fill="#141c30"/>
+    <rect x="1100" y="150" width="70" height="150" fill="#0d1322"/>
+    <g fill="#ffd98e" opacity="0.35">
+      <rect x="45" y="160" width="6" height="6"/><rect x="65" y="200" width="6" height="6"/>
+      <rect x="135" y="120" width="6" height="6"/><rect x="215" y="190" width="6" height="6"/>
+      <rect x="330" y="100" width="6" height="6"/><rect x="420" y="160" width="6" height="6"/>
+      <rect x="620" y="110" width="6" height="6"/><rect x="720" y="190" width="6" height="6"/>
+      <rect x="835" y="140" width="6" height="6"/><rect x="1030" y="130" width="6" height="6"/>
+    </g>
+  </svg>
+  <canvas id="rain-canvas"></canvas>
+  <div id="petals"></div>
+</div>
+
+<!-- OPENING -->
+<main id="opening-stage" class="stage">
+  <div id="opening">
+    <p class="opening-line" id="line1">Rijjuuuu… I know you said goodbye.</p>
+    <p class="opening-line" id="line2">I won't ask you to change your decision.</p>
+    <button class="enter-btn" id="enterBtn">Just read this once… if you want to.</button>
+    <span class="no-pressure-note" id="noPressure">you can close this tab any time. really.</span>
+  </div>
+</main>
+
+<!-- LETTER -->
+<section id="letter-stage" class="stage hidden">
+  <div class="letter-wrap">
+    <p class="letter-heading">a letter, typed a little too late at night</p>
+    <div class="paper">
+      <div class="letter-font" id="letterText"></div>
+    </div>
+    <div class="skip-row">
+      <button class="skip-btn" id="skipBtn">skip ahead</button>
+    </div>
+
+    <div id="choices-block">
+      <p class="choices-lead">no pressure at all. only if you want to say something back.</p>
+      <div class="choice-row">
+        <button class="choice-btn" data-choice="understand">I understand.</button>
+        <button class="choice-btn" data-choice="space">I need space.</button>
+        <button class="choice-btn" data-choice="someday">Maybe someday.</button>
+      </div>
+      <p class="response-note" id="responseNote"></p>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section id="final-stage" class="stage hidden">
+  <div>
+    <p class="final-line">That's all I wanted to say.</p>
+    <div class="final-triplet">
+      <div>No pressure.</div>
+      <div>No expectations.</div>
+      <div>Just the truth.</div>
+    </div>
+    <p class="final-line">Take care, Rijjuuuu. <span class="rose-mark">🌹</span></p>
+    <footer class="site-footer">some feelings don't need an answer to have been real.</footer>
+  </div>
+</section>
+
+<script>
+(function(){
+  "use strict";
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- rain ---------------- */
+  var canvas = document.getElementById('rain-canvas');
+  var ctx = canvas.getContext('2d');
+  var drops = [];
+  var rainRunning = true;
+
+  function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function makeDrop(){
+    return {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      len: 10 + Math.random() * 18,
+      speed: 4 + Math.random() * 5,
+      opacity: 0.08 + Math.random() * 0.18
+    };
+  }
+
+  var dropCount = reduceMotion ? 0 : 90;
+  for (var i = 0; i < dropCount; i++){ drops.push(makeDrop()); }
+
+  function drawRain(){
+    if (!rainRunning) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(180,195,220,0.5)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i < drops.length; i++){
+      var d = drops[i];
+      ctx.globalAlpha = d.opacity;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - 1.5, d.y + d.len);
+      ctx.stroke();
+      d.y += d.speed;
+      d.x -= 0.3;
+      if (d.y > canvas.height){
+        d.y = -20;
+        d.x = Math.random() * canvas.width;
+      }
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawRain);
+  }
+  if (!reduceMotion) requestAnimationFrame(drawRain);
+
+  /* ---------------- petals ---------------- */
+  var petalHost = document.getElementById('petals');
+  var petalChars = ['🌹', '🥀'];
+
+  function spawnPetal(){
+    if (reduceMotion) return;
+    var p = document.createElement('span');
+    p.className = 'petal';
+    p.textContent = petalChars[Math.random() < 0.7 ? 0 : 1];
+    p.style.left = (Math.random() * 100) + 'vw';
+    var duration = 14 + Math.random() * 10;
+    p.style.setProperty('--drift-x', (Math.random() * 160 - 80) + 'px');
+    p.style.animationDuration = duration + 's';
+    petalHost.appendChild(p);
+    setTimeout(function(){ p.remove(); }, duration * 1000 + 500);
+  }
+
+  if (!reduceMotion){
+    for (var s = 0; s < 3; s++){ setTimeout(spawnPetal, s * 3000); }
+    setInterval(spawnPetal, 4200);
+  }
+
+  /* ---------------- opening sequence ---------------- */
+  var line1 = document.getElementById('line1');
+  var line2 = document.getElementById('line2');
+  var enterBtn = document.getElementById('enterBtn');
+  var noPressure = document.getElementById('noPressure');
+
+  setTimeout(function(){ line1.classList.add('show'); }, 400);
+  setTimeout(function(){ line2.classList.add('show'); }, 2200);
+  setTimeout(function(){ enterBtn.classList.add('show'); }, 4000);
+  setTimeout(function(){ noPressure.classList.add('show'); }, 4600);
+
+  var openingStage = document.getElementById('opening-stage');
+  var letterStage = document.getElementById('letter-stage');
+  var finalStage = document.getElementById('final-stage');
+
+  enterBtn.addEventListener('click', function(){
+    openingStage.classList.add('hidden');
+    letterStage.classList.remove('hidden');
+    letterStage.classList.add('fade-in');
+    startLetter();
+  });
+
+  /* ---------------- letter typewriter ---------------- */
+  var letterParagraphs = [
+    "Rijjuuuu,",
+    "I don't really know how to write this.",
+    "Maybe I shouldn't even be sending anything after you said goodbye. But there's one thing I couldn't say properly, and I keep thinking about it.",
+    "You told me to say \"I hate you\" if I wanted to keep talking to you.",
+    "I couldn't say it.",
+    "Not because I'm trying to be difficult, or stubborn, or whatever it looked like. I couldn't say it because it wouldn't be true. I don't hate you. I genuinely like you, and I don't think that just goes away because you asked me to say something I don't mean.",
+    "Maybe I got too attached. Maybe I said things badly, at the wrong time, in the wrong way. Maybe I made you uncomfortable without realizing it. Or maybe none of that matters and you just don't feel the same. I don't fully know. But whatever the reason is — I'm sorry for the parts I got wrong.",
+    "I'm not writing this to convince you that you have to stay, or reply, or forgive me. I don't want you talking to me just because you feel bad. That's not what this is.",
+    "I just wanted you to know the feelings I had were real. That's really it.",
+    "If you want me out of your life, I'll respect that. It'll hurt, obviously — I'm not going to pretend it won't. But I'll respect it. I just didn't want our last memory of each other to be anger, when that's not what any of this actually was.",
+    "You don't have to reply to this. You don't even have to forgive me. I just wanted to say the thing I couldn't get out properly before.",
+    "Thank you for every conversation. Every stupid little moment. Every laugh, and every ordinary day that felt a little less ordinary because you were part of it.",
+    "🌹",
+    "Take care of yourself, Rijjuuuu.",
+    "And if someday you feel like talking again — you know where to find me.",
+    "If not… I still genuinely wish you happiness.",
+    "🙇🏻"
+  ];
+
+  var letterEl = document.getElementById('letterText');
+  var skipBtn = document.getElementById('skipBtn');
+  var choicesBlock = document.getElementById('choices-block');
+  var letterStarted = false;
+  var letterFinished = false;
+  var typeTimer = null;
+
+  function renderFullLetter(){
+    letterEl.innerHTML = '';
+    letterParagraphs.forEach(function(txt, idx){
+      var p = document.createElement('p');
+      if (idx === letterParagraphs.length - 3) p.classList.add('signoff'); // "Thank you..." spacing
+      p.textContent = txt;
+      letterEl.appendChild(p);
+    });
+    var sign = document.createElement('p');
+    sign.className = 'signoff';
+    sign.textContent = '— Aaryan';
+    letterEl.appendChild(sign);
+    finishLetter();
+  }
+
+  function finishLetter(){
+    letterFinished = true;
+    skipBtn.classList.add('hidden');
+    choicesBlock.classList.add('show');
+  }
+
+  function typeLetter(){
+    if (letterStarted) return;
+    letterStarted = true;
+
+    var pIndex = 0;
+    var charIndex = 0;
+    var currentP = null;
+    var caret = null;
+
+    function nextChar(){
+      if (pIndex >= letterParagraphs.length){
+        var sign = document.createElement('p');
+        sign.className = 'signoff';
+        sign.textContent = '— Aaryan';
+        letterEl.appendChild(sign);
+        finishLetter();
+        return;
+      }
+
+      if (charIndex === 0){
+        currentP = document.createElement('p');
+        if (pIndex === letterParagraphs.length - 3) currentP.classList.add('signoff');
+        caret = document.createElement('span');
+        caret.className = 'caret';
+        currentP.appendChild(caret);
+        letterEl.appendChild(currentP);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+
+      var text = letterParagraphs[pIndex];
+
+      if (charIndex < text.length){
+        var textNode = document.createTextNode(text[charIndex]);
+        currentP.insertBefore(textNode, caret);
+        charIndex++;
+        var pauseChars = '.,…—';
+        var delay = pauseChars.indexOf(text[charIndex - 1]) > -1 ? 220 : (18 + Math.random() * 34);
+        typeTimer = setTimeout(nextChar, delay);
+      } else {
+        caret.remove();
+        pIndex++;
+        charIndex = 0;
+        typeTimer = setTimeout(nextChar, 420);
+      }
+    }
+
+    if (reduceMotion){
+      renderFullLetter();
+    } else {
+      nextChar();
+    }
+  }
+
+  function startLetter(){
+    typeLetter();
+  }
+
+  skipBtn.addEventListener('click', function(){
+    if (typeTimer) clearTimeout(typeTimer);
+    letterStarted = true;
+    renderFullLetter();
+  });
+
+  /* ---------------- choice buttons ---------------- */
+  var choiceBtns = document.querySelectorAll('.choice-btn');
+  var responseNote = document.getElementById('responseNote');
+  var responses = {
+    understand: "Thank you for reading. Whatever you choose, I respect it. 🙇🏻",
+    space: "Take all the time you need. There's no clock on this. 🙇🏻",
+    someday: "No rush at all. The door's open, not held open. 🙇🏻"
+  };
+
+  choiceBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      choiceBtns.forEach(function(b){ b.classList.remove('picked'); });
+      btn.classList.add('picked');
+      var key = btn.getAttribute('data-choice');
+      responseNote.textContent = responses[key];
+      responseNote.classList.remove('show');
+      void responseNote.offsetWidth;
+      responseNote.classList.add('show');
+
+      setTimeout(function(){
+        letterStage.classList.add('hidden');
+        finalStage.classList.remove('hidden');
+        finalStage.classList.add('fade-in');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 2400);
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
